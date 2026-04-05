@@ -63,15 +63,15 @@
 - [x] Vitest tests for burn procedures (covered in scn-mutations.test.ts — 46 total passing)
 
 ## Protocol Restructure — Ownerless Commons (April 2026)
-- [ ] Rewrite Open Source Declaration v2.0 — remove all league/franchise acquisition language
-- [ ] Establish ownerless protocol definition (like Bitcoin — no foundation, no owner)
-- [ ] Reframe treasury as "Community Commons Reserve" not acquisition fund
-- [ ] Update DAO page language — remove franchise/league references
-- [ ] Build verified governance threshold system (3-tier: Owner, Artist, Player)
-- [ ] Add 3-month genesis lock before first community vote can execute
-- [ ] Add verified account threshold gate before fund deployment votes unlock
-- [ ] Add stable token mechanics — fixed supply, inflation protection rules
-- [ ] Add community liquidity reserve (not "liquidity pool" — reserve is more accurate legally)
-- [ ] Update all UI copy to remove ownership/acquisition framing
-- [ ] Legal restructure memo — why no one can sue an ownerless protocol
-- [ ] Push final declaration to public GitHub repo
+- [x] Rewrite Open Source Declaration v2.0 — remove all league/franchise acquisition language
+- [x] Establish ownerless protocol definition (like Bitcoin — no foundation, no owner)
+- [x] Reframe treasury as "Community Commons Reserve" not acquisition fund
+- [x] Update DAO page language — remove franchise/league references
+- [x] Build verified governance threshold system (3-tier: Collector, Artist, Athlete)
+- [x] Add 3-month genesis lock before first community vote can execute
+- [x] Add verified account threshold gate before fund deployment votes unlock
+- [x] Add stable token mechanics — fixed supply, inflation protection rules
+- [x] Add community liquidity reserve (CLR — Community Liquidity Reserve, not "pool")
+- [x] Update all UI copy to remove ownership/acquisition framing (Home + DAO pages rewritten)
+- [x] Legal restructure memo — Part VI of Declaration v2.0 covers this in full
+- [ ] Push final declaration to public GitHub repo (pending user confirmation)
