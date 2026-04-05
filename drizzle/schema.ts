@@ -153,7 +153,13 @@ export const daoTreasury = mysqlTable("dao_treasury", {
   currentBalance: decimal("currentBalance", { precision: 18, scale: 6 }).default("0.000000").notNull(),
   totalTransactions: bigint("totalTransactions", { mode: "number" }).default(0).notNull(),
   targetMilestone: decimal("targetMilestone", { precision: 18, scale: 2 }).default("1000000000.00"),
-  milestoneLabel: varchar("milestoneLabel", { length: 256 }).default("MLB Licensing Rights Acquisition"),
+  milestoneLabel: varchar("milestoneLabel", { length: 256 }).default("Community Commons — No Prescribed Purpose"),
+  genesisDate: timestamp("genesisDate").defaultNow(),
+  tier1Verified: int("tier1Verified").default(0).notNull(),
+  tier2Verified: int("tier2Verified").default(0).notNull(),
+  tier3Verified: int("tier3Verified").default(0).notNull(),
+  deploymentUnlocked: boolean("deploymentUnlocked").default(false).notNull(),
+  clrAllocationPct: decimal("clrAllocationPct", { precision: 5, scale: 2 }).default("0.00").notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
