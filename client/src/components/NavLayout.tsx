@@ -17,6 +17,8 @@ import {
   LogOut,
   LogIn,
   ChevronRight,
+  Bot,
+  FlaskConical,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -31,6 +33,7 @@ const navItems = [
   { href: "/collection", label: "Collection", icon: LayoutGrid },
   { href: "/dao", label: "DAO / Gov", icon: Vote },
   { href: "/explorer", label: "Explorer", icon: Activity },
+  { href: "/bots", label: "AI Bots", icon: Bot },
 ];
 
 export default function NavLayout({ children }: { children: ReactNode }) {

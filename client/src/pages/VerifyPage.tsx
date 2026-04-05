@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { ShieldCheck, Cpu, Search, CheckCircle, Clock, ArrowRight, AlertCircle } from "lucide-react";
-import { Link } from "wouter";
+import { ShieldCheck, Cpu, Search, CheckCircle, Clock, ArrowRight, AlertCircle, QrCode, ScanLine } from "lucide-react";
+import { Link, useSearch } from "wouter";
 
 export default function VerifyPage() {
   const { isAuthenticated } = useAuth();
@@ -16,8 +16,24 @@ export default function VerifyPage() {
 
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [verifyResult, setVerifyResult] = useState<any>(null);
+  const [verifyResult, setVerifyResult] = useState<{ gradeScore: number; pufHash: string; txHash: string } | null>(null);
   const [custodyCardId, setCustodyCardId] = useState<number | null>(null);
+  const [qrTokenId, setQrTokenId] = useState<string>("");
+  const [showQr, setShowQr] = useState(false);
+
+  // Support ?token= URL param for QR scan deep link
+  const search = useSearch();
+  const urlToken = new URLSearchParams(search).get("token");
+
+  const { data: qrData } = trpc.qr.generate.useQuery(
+    { tokenId: qrTokenId },
+    { enabled: showQr && !!qrTokenId }
+  );
+
+  const { data: scannedCard } = trpc.qr.scan.useQuery(
+    { tokenId: urlToken || "" },
+    { enabled: !!urlToken }
+  );
 
   const { data: custodyHistory } = trpc.explorer.cardCustody.useQuery(
     { cardId: custodyCardId! },
@@ -61,6 +77,36 @@ export default function VerifyPage() {
         <h1 className="text-3xl font-black mb-2" style={{ color: "oklch(0.95 0.01 240)" }}>Card Verification</h1>
         <p className="text-sm" style={{ color: "oklch(0.55 0.02 240)" }}>PUF scan authentication and complete chain of custody tracking.</p>
       </div>
+
+      {/* URL-based QR scan result */}
+      {urlToken && scannedCard && (
+        <div className="mb-6 p-5 rounded-xl" style={{ background: "oklch(0.72 0.18 145 / 0.08)", border: "1px solid oklch(0.72 0.18 145 / 0.35)" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <ScanLine className="w-5 h-5" style={{ color: "oklch(0.72 0.18 145)" }} />
+            <span className="font-bold" style={{ color: "oklch(0.72 0.18 145)" }}>QR Code Scan Result — {scannedCard.network}</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="p-3 rounded-lg" style={{ background: "oklch(0.09 0.01 240)", border: "1px solid oklch(0.18 0.02 240)" }}>
+              <div className="text-xs mb-1" style={{ color: "oklch(0.45 0.02 240)" }}>Athlete</div>
+              <div className="text-sm font-bold" style={{ color: "oklch(0.92 0.01 240)" }}>{scannedCard.card.athleteName}</div>
+            </div>
+            <div className="p-3 rounded-lg" style={{ background: "oklch(0.09 0.01 240)", border: "1px solid oklch(0.18 0.02 240)" }}>
+              <div className="text-xs mb-1" style={{ color: "oklch(0.45 0.02 240)" }}>Edition</div>
+              <div className="text-sm font-bold" style={{ color: "oklch(0.82 0.18 85)" }}>{scannedCard.card.edition?.replace("_", " ")}</div>
+            </div>
+            <div className="p-3 rounded-lg" style={{ background: "oklch(0.09 0.01 240)", border: "1px solid oklch(0.18 0.02 240)" }}>
+              <div className="text-xs mb-1" style={{ color: "oklch(0.45 0.02 240)" }}>On-Chain Status</div>
+              <div className="text-sm font-bold" style={{ color: scannedCard.verified ? "oklch(0.72 0.18 145)" : "oklch(0.72 0.18 30)" }}>
+                {scannedCard.verified ? "✓ Verified" : "Unverified"}
+              </div>
+            </div>
+            <div className="p-3 rounded-lg" style={{ background: "oklch(0.09 0.01 240)", border: "1px solid oklch(0.18 0.02 240)" }}>
+              <div className="text-xs mb-1" style={{ color: "oklch(0.45 0.02 240)" }}>Custody Records</div>
+              <div className="text-sm font-bold" style={{ color: "oklch(0.72 0.18 200)" }}>{scannedCard.custody.length}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* PUF Scanner */}
@@ -128,6 +174,50 @@ export default function VerifyPage() {
               <Cpu className="w-4 h-4" />
               {scanning ? "PUF Scanning..." : "Initiate PUF Scan"}
             </Button>
+          </div>
+
+          {/* QR Code Generator */}
+          <div className="scn-card p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <QrCode className="w-5 h-5" style={{ color: "oklch(0.72 0.18 200)" }} />
+              <h2 className="font-bold" style={{ color: "oklch(0.92 0.01 240)" }}>Generate Card QR Code</h2>
+            </div>
+            <p className="text-xs mb-3" style={{ color: "oklch(0.50 0.02 240)" }}>Generate a QR code for any card token ID. Scan with any device to instantly verify authenticity on-chain.</p>
+            <div className="flex gap-2 mb-3">
+              <Input
+                placeholder="Enter Token ID (e.g. SCN-ABC123)"
+                value={qrTokenId}
+                onChange={(e) => { setQrTokenId(e.target.value); setShowQr(false); }}
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+              />
+              <Button
+                onClick={() => setShowQr(true)}
+                disabled={!qrTokenId.trim()}
+                style={{ background: "linear-gradient(135deg, oklch(0.72 0.18 200), oklch(0.65 0.22 280))", color: "white", border: "none" }}
+              >
+                <QrCode className="w-4 h-4" />
+              </Button>
+            </div>
+            {/* Quick-select from owned cards */}
+            {myCards && myCards.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {myCards.slice(0, 4).map(c => (
+                  <button key={c.id} onClick={() => { setQrTokenId(c.tokenId); setShowQr(true); }} className="text-xs px-2 py-1 rounded-md transition-colors" style={{ background: "oklch(0.12 0.01 240)", border: "1px solid oklch(0.22 0.02 240)", color: "oklch(0.65 0.02 240)" }}>
+                    {c.tokenId}
+                  </button>
+                ))}
+              </div>
+            )}
+            {showQr && qrData && (
+              <div className="flex flex-col items-center gap-3">
+                <img src={qrData.qrDataUrl} alt="Card QR Code" className="w-40 h-40 rounded-xl" />
+                <div className="text-center">
+                  <div className="text-xs font-mono" style={{ color: "oklch(0.72 0.18 200)" }}>{qrData.tokenId}</div>
+                  <div className="text-xs mt-1" style={{ color: "oklch(0.45 0.02 240)" }}>Scan to verify on SCN-TESTNET-1</div>
+                </div>
+                <a href={`/verify?token=${qrData.tokenId}`} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "oklch(0.72 0.18 200)" }}>Test scan link →</a>
+              </div>
+            )}
           </div>
 
           {/* Verification Result */}

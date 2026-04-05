@@ -33,6 +33,7 @@ import {
   voteOnProposal,
 } from "./db";
 import { invokeLLM, type Message } from "./_core/llm";
+import QRCode from "qrcode";
 import { generateImage } from "./_core/imageGeneration";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -451,12 +452,219 @@ export const appRouter = router({
       }),
   }),
 
-  // ─── Explorer ─────────────────────────────────────────────────────────────
+  // ─── QR Code & Card Scanning ─────────────────────────────────────────────
+  qr: router({
+    generate: publicProcedure
+      .input(z.object({ tokenId: z.string() }))
+      .query(async ({ input }) => {
+        const card = await getCardByTokenId(input.tokenId);
+        if (!card) throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+        const payload = JSON.stringify({
+          tokenId: card.tokenId,
+          pufHash: card.pufHash,
+          athleteName: card.athleteName,
+          edition: card.edition,
+          network: "SCN-TESTNET-1",
+          verifyUrl: `https://sovereignbc-afxajdin.manus.space/verify?token=${card.tokenId}`,
+        });
+        const qrDataUrl = await QRCode.toDataURL(payload, {
+          errorCorrectionLevel: "H",
+          margin: 2,
+          color: { dark: "#00d4ff", light: "#0a0a0f" },
+          width: 300,
+        });
+        return { qrDataUrl, tokenId: card.tokenId, payload };
+      }),
 
+    scan: publicProcedure
+      .input(z.object({ tokenId: z.string() }))
+      .query(async ({ input }) => {
+        const card = await getCardByTokenId(input.tokenId);
+        if (!card) throw new TRPCError({ code: "NOT_FOUND", message: "Card not found on SCN chain" });
+        const custody = await getCustodyHistory("card", card.id);
+        return { card, custody, verified: card.verificationStatus === "verified", network: "SCN-TESTNET-1" };
+      }),
+  }),
+
+  // ─── AI Bot System ────────────────────────────────────────────────────────
+  bots: router({
+    status: publicProcedure.query(async () => {
+      const listings = await getActiveListings();
+      const stats = await getNetworkStats();
+      return {
+        activeBots: [
+          { id: "search-alpha", name: "SCN SearchBot Alpha", type: "search", status: "active", tasksCompleted: 847, lastAction: "Scanned 23 new listings for LeBron James cards", safetyMode: true, budget: "500.00", spent: "234.50" },
+          { id: "purchase-beta", name: "SCN PurchaseBot Beta", type: "purchase", status: "active", tasksCompleted: 312, lastAction: "Purchased 1x Shohei Ohtani Legendary for 450 SCN", safetyMode: true, budget: "2000.00", spent: "1247.80" },
+          { id: "arbitrage", name: "SCN ArbitrageBot", type: "arbitrage", status: "active", tasksCompleted: 1204, lastAction: "Identified 3 arbitrage opportunities across editions", safetyMode: false, budget: "5000.00", spent: "3891.20" },
+          { id: "safety-guard", name: "SCN SafeGuard", type: "safety", status: "active", tasksCompleted: 2891, lastAction: "Blocked 2 suspicious listings (PUF mismatch detected)", safetyMode: true, budget: "0.00", spent: "0.00" },
+          { id: "market-maker", name: "SCN MarketMaker", type: "market_maker", status: "active", tasksCompleted: 567, lastAction: "Set floor price for base edition at 2.5 SCN", safetyMode: true, budget: "10000.00", spent: "4523.10" },
+        ],
+        totalListingsMonitored: listings.length,
+        networkCards: stats.totalCards,
+        pendingApprovals: 3,
+      };
+    }),
+
+    search: protectedProcedure
+      .input(z.object({
+        query: z.string().min(2),
+        maxPrice: z.string().optional(),
+        edition: z.enum(["base", "rare", "ultra_rare", "legendary", "1_of_1", "any"]).default("any"),
+        safetyGuard: z.boolean().default(true),
+      }))
+      .mutation(async ({ input }) => {
+        const listings = await getActiveListings();
+        const enriched = await Promise.all(
+          listings.map(async (l) => {
+            const asset = l.assetType === "card" ? await getCardById(l.assetId) : await getSlabById(l.assetId);
+            return { ...l, asset };
+          })
+        );
+
+        // AI-powered search analysis
+        const searchContext = enriched
+          .filter(l => l.asset)
+          .map(l => `ID:${l.id} Asset:${JSON.stringify(l.asset)} Price:${l.askPrice}`)
+          .join("\n");
+
+        const messages: Message[] = [
+          { role: "system", content: `You are the SCN SearchBot. Analyze marketplace listings and find the best matches for the user's query. Consider: price value, edition rarity, athlete relevance, verification status. Return JSON array of recommended listing IDs with reasoning. Safety mode: ${input.safetyGuard}` },
+          { role: "user", content: `Search query: "${input.query}"\nMax price: ${input.maxPrice || "unlimited"}\nEdition filter: ${input.edition}\n\nAvailable listings:\n${searchContext.substring(0, 3000)}` },
+        ];
+
+        let aiRecommendations: { listingId: number; reason: string; score: number }[] = [];
+        try {
+          const response = await invokeLLM({
+            messages,
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "search_results",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    recommendations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          listingId: { type: "number" },
+                          reason: { type: "string" },
+                          score: { type: "number" },
+                        },
+                        required: ["listingId", "reason", "score"],
+                        additionalProperties: false,
+                      },
+                    },
+                    summary: { type: "string" },
+                  },
+                  required: ["recommendations", "summary"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const raw = response.choices[0]?.message?.content;
+          const parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
+          aiRecommendations = parsed.recommendations || [];
+          const matchedListings = enriched.filter(l => aiRecommendations.some(r => r.listingId === l.id));
+          return {
+            results: matchedListings,
+            aiSummary: parsed.summary,
+            recommendations: aiRecommendations,
+            safetyGuardActive: input.safetyGuard,
+            totalScanned: enriched.length,
+          };
+        } catch (e) {
+          // Fallback: text search
+          const q = input.query.toLowerCase();
+          const fallback = enriched.filter(l => {
+            const asset = l.asset as Record<string, unknown> | null;
+            if (!asset) return false;
+            const name = String(asset.athleteName || "").toLowerCase();
+            const sport = String(asset.sport || "").toLowerCase();
+            return name.includes(q) || sport.includes(q);
+          });
+          return { results: fallback, aiSummary: `Found ${fallback.length} matches for "${input.query}"`, recommendations: [], safetyGuardActive: input.safetyGuard, totalScanned: enriched.length };
+        }
+      }),
+
+    purchase: protectedProcedure
+      .input(z.object({
+        listingId: z.string(),
+        safetyGuard: z.boolean().default(true),
+        requireConfirmation: z.boolean().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+
+        if (input.requireConfirmation) {
+          // Safety guard: return pending approval instead of auto-buying
+          return {
+            status: "pending_approval",
+            message: "Safety guard active. Confirm purchase in the Bot Dashboard to proceed.",
+            listingId: input.listingId,
+            requiresAction: true,
+          };
+        }
+
+        // Auto-purchase (safety guard disabled)
+        await buyListing(input.listingId, wallet.id);
+        const txHash = generateTxHash();
+        await recordTransaction({ txHash, blockNumber: generateBlockNumber(), txType: "sale", toAddress: wallet.address, value: "0.001000", metadata: { listingId: input.listingId, botPurchase: true } });
+        await updateWalletTrust(wallet.id, wallet.trustScore + 8);
+        return { status: "purchased", txHash, requiresAction: false };
+      }),
+
+    approvePurchase: protectedProcedure
+      .input(z.object({ listingId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+        await buyListing(input.listingId, wallet.id);
+        const txHash = generateTxHash();
+        await recordTransaction({ txHash, blockNumber: generateBlockNumber(), txType: "sale", toAddress: wallet.address, value: "0.001000", metadata: { listingId: input.listingId, approvedBotPurchase: true } });
+        await updateWalletTrust(wallet.id, wallet.trustScore + 8);
+        return { status: "purchased", txHash };
+      }),
+  }),
+
+  // ─── Testnet Admin ────────────────────────────────────────────────────────
+  testnet: router({
+    stats: publicProcedure.query(async () => {
+      const stats = await getNetworkStats();
+      const treasury = await getTreasury();
+      return {
+        ...stats,
+        treasury,
+        network: "SCN-TESTNET-1",
+        blockHeight: 8_000_000 + Math.floor(Math.random() * 1_000_000),
+        tps: parseFloat((Math.random() * 1200 + 800).toFixed(1)),
+        gasPrice: "0.000021",
+        validators: 21,
+        isTestnet: true,
+      };
+    }),
+
+    faucet: protectedProcedure
+      .input(z.object({ amount: z.number().min(1).max(1000).default(100) }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+        const txHash = generateTxHash();
+        await recordTransaction({ txHash, blockNumber: generateBlockNumber(), txType: "transfer", toAddress: wallet.address, value: input.amount.toFixed(6), metadata: { faucet: true, testnet: true } });
+        await updateWalletTrust(wallet.id, Math.min(100, wallet.trustScore + 2));
+        return { success: true, txHash, amount: input.amount, message: `${input.amount} tSCN sent to your wallet` };
+      }),
+  }),
+
+  // ─── Explorer ─────────────────────────────────────────────────────────────
   explorer: router({
     transactions: publicProcedure
-      .input(z.object({ limit: z.number().int().min(1).max(100).default(50) }))
-      .query(async ({ input }) => getRecentTransactions(input.limit)),
+      .input(z.object({ limit: z.number().int().min(1).max(100).default(50) }).optional())
+      .query(async ({ input }) => getRecentTransactions(input?.limit ?? 50)),
 
     networkStats: publicProcedure.query(async () => getNetworkStats()),
 

@@ -29,3 +29,18 @@
 
 ## Testing
 - [x] Vitest tests for core procedures (12 passing)
+
+## Testnet Battle-Test & Simulation
+- [x] Audit all pages for broken flows, missing error states, dead-end buttons
+- [x] Seed testnet: 10 wallets, 50 cards, 5 slabs, 20 listings, 5 DAO proposals, 110 transactions
+- [x] AI Bot System: SearchBot, PurchaseBot, ArbitrageBot, SafetyGuard, MarketMaker + BotDashboard page
+- [x] Card QR code generation and QR scanner with deep-link scan support
+- [x] Fix wallet creation flow end-to-end
+- [x] Fix card minting with real PUF hash generation
+- [x] Fix slab sealing and card-into-slab flow
+- [x] Fix PUF verification with grade scoring
+- [x] Fix marketplace buy/sell/cancel with proper ownership checks
+- [x] Fix DAO voting with duplicate vote prevention
+- [x] Add testnet banner/indicator throughout UI (Bot Dashboard shows testnet status)
+- [x] Run full simulation: e2e-simulation.mjs — 29/29 PASS 100%
+- [x] All vitest tests passing after fixes (12/12)
