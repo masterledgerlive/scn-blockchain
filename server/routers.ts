@@ -31,6 +31,15 @@ import {
   upsertUser,
   verifyCard,
   voteOnProposal,
+  generateTearCode,
+  backfillTearCodes,
+  getBurnPoolByCardId,
+  getAllBurnPools,
+  createBurnPool,
+  contributeToPool,
+  getPoolContributions,
+  executeBurn,
+  getRecentBurnEvents,
 } from "./db";
 import { invokeLLM, type Message } from "./_core/llm";
 import QRCode from "qrcode";
@@ -675,6 +684,193 @@ export const appRouter = router({
     slabCustody: publicProcedure
       .input(z.object({ slabId: z.number() }))
       .query(async ({ input }) => getCustodyHistory("slab", input.slabId)),
+  }),
+
+  // ─── Burn Mechanism ───────────────────────────────────────────────────────
+  burn: router({
+    /** Get all active burn pools */
+    pools: publicProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(50).default(20) }).optional())
+      .query(async ({ input }) => getAllBurnPools(input?.limit ?? 20)),
+
+    /** Get the burn pool for a specific card */
+    poolByCard: publicProcedure
+      .input(z.object({ cardId: z.number() }))
+      .query(async ({ input }) => getBurnPoolByCardId(input.cardId)),
+
+    /** Get contributions to a specific pool */
+    contributions: publicProcedure
+      .input(z.object({ poolId: z.number() }))
+      .query(async ({ input }) => getPoolContributions(input.poolId)),
+
+    /** Get recent burn events */
+    recentBurns: publicProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(50).default(20) }).optional())
+      .query(async ({ input }) => getRecentBurnEvents(input?.limit ?? 20)),
+
+    /** Create a new burn pool for a card */
+    createPool: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+        thresholdMultiplier: z.number().min(1.1).max(10).default(1.5),
+        daysUntilExpiry: z.number().min(1).max(365).default(30),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+        const card = await getCardById(input.cardId);
+        if (!card) throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+        if (card.isBurned) throw new TRPCError({ code: "BAD_REQUEST", message: "Card is already burned" });
+        // Check no open pool exists
+        const existing = await getBurnPoolByCardId(input.cardId);
+        if (existing) throw new TRPCError({ code: "CONFLICT", message: "An active burn pool already exists for this card" });
+        const marketValue = parseFloat(card.marketValue ?? "100");
+        const threshold = (marketValue * input.thresholdMultiplier).toFixed(6);
+        const expiresAt = new Date(Date.now() + input.daysUntilExpiry * 24 * 60 * 60 * 1000);
+        const poolId = `POOL-${nanoid(16).toUpperCase()}`;
+        const pool = await createBurnPool({
+          poolId,
+          cardId: input.cardId,
+          cardTokenId: card.tokenId,
+          thresholdAmount: threshold,
+          cardMarketValue: marketValue.toFixed(2),
+          expiresAt,
+        });
+        await recordTransaction({
+          txHash: generateTxHash(),
+          blockNumber: generateBlockNumber(),
+          txType: "burn_pool_contribute",
+          fromAddress: wallet.address,
+          value: "0.000000",
+          metadata: { action: "pool_created", poolId, cardId: input.cardId },
+        });
+        return pool;
+      }),
+
+    /** Contribute SCN tokens to a burn pool */
+    contribute: protectedProcedure
+      .input(z.object({
+        poolId: z.number(),
+        amount: z.number().min(0.000001).max(1_000_000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+        const txHash = generateTxHash();
+        await contributeToPool({
+          poolId: input.poolId,
+          contributorWalletId: wallet.id,
+          amount: input.amount.toFixed(6),
+          txHash,
+        });
+        await recordTransaction({
+          txHash,
+          blockNumber: generateBlockNumber(),
+          txType: "burn_pool_contribute",
+          fromAddress: wallet.address,
+          value: input.amount.toFixed(6),
+          metadata: { poolId: input.poolId, contribution: true },
+        });
+        return { success: true, txHash, amount: input.amount };
+      }),
+
+    /** Reveal the tear code for a card you own (first step before physical tear) */
+    revealTearCode: protectedProcedure
+      .input(z.object({ cardId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+        const card = await getCardById(input.cardId);
+        if (!card) throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+        if (card.ownerWalletId !== wallet.id) throw new TRPCError({ code: "FORBIDDEN", message: "You do not own this card" });
+        if (card.isBurned) throw new TRPCError({ code: "BAD_REQUEST", message: "Card is already burned" });
+        // Generate tear code if not yet assigned
+        let tearCode = card.tearCode;
+        if (!tearCode) {
+          tearCode = generateTearCode();
+          // Use the backfillTearCodes helper indirectly by updating via raw query
+          const { getDb } = await import("./db");
+          const db = await getDb();
+          if (db) {
+            const { cards: cardsTable } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
+            await db.update(cardsTable).set({ tearCode, tearCodeRevealed: true }).where(eq(cardsTable.id, card.id));
+          }
+        }
+        return { tearCode, cardId: card.id, tokenId: card.tokenId, athleteName: card.athleteName };
+      }),
+
+    /** Execute the burn: submit tear code to verify physical destruction */
+    executeBurn: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+        tearCode: z.string().min(10).max(32),
+        confirmDestruction: z.literal(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const wallet = await getWalletByUserId(ctx.user.id);
+        if (!wallet) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a wallet first" });
+        const card = await getCardById(input.cardId);
+        if (!card) throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+        if (card.ownerWalletId !== wallet.id) throw new TRPCError({ code: "FORBIDDEN", message: "You do not own this card" });
+        if (card.isBurned) throw new TRPCError({ code: "BAD_REQUEST", message: "Card is already burned" });
+        // Validate tear code
+        const normalizedInput = input.tearCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        const normalizedStored = (card.tearCode ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (normalizedInput !== normalizedStored) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid tear code. The code does not match this card's security strip." });
+        }
+        // Check for active burn pool
+        const pool = await getBurnPoolByCardId(input.cardId);
+        const poolAmountClaimed = pool ? pool.totalContributed : "0.000000";
+        const seriesBefore = card.seriesRemaining ?? card.seriesTotal ?? 50;
+        const seriesAfter = Math.max(0, seriesBefore - 1);
+        const txHash = generateTxHash();
+        const burnId = `BURN-${nanoid(16).toUpperCase()}`;
+        // Calculate scarcity dividend per remaining card
+        const poolAmount = parseFloat(poolAmountClaimed);
+        const dividendShare = 0.1; // 10% of pool goes to remaining series holders
+        const remainingCards = seriesAfter;
+        const dividendPerCard = remainingCards > 0 ? ((poolAmount * dividendShare) / remainingCards).toFixed(6) : "0.000000";
+        const burnEvent = await executeBurn({
+          burnId,
+          cardId: input.cardId,
+          cardTokenId: card.tokenId,
+          burnerWalletId: wallet.id,
+          tearCodeSubmitted: input.tearCode,
+          txHash,
+          blockNumber: generateBlockNumber(),
+          poolId: pool?.id,
+          poolAmountClaimed,
+          scarcityDividendPerCard: dividendPerCard,
+          seriesBeforeBurn: seriesBefore,
+          seriesAfterBurn: seriesAfter,
+        });
+        await recordTransaction({
+          txHash,
+          blockNumber: generateBlockNumber(),
+          txType: "burn",
+          fromAddress: wallet.address,
+          value: poolAmountClaimed,
+          metadata: { burnId, cardId: input.cardId, tokenId: card.tokenId, seriesBefore, seriesAfter },
+        });
+        return {
+          success: true,
+          burnId,
+          txHash,
+          poolAmountClaimed,
+          dividendPerCard,
+          seriesBefore,
+          seriesAfter,
+          message: `Card ${card.tokenId} has been permanently destroyed and verified on-chain. Pool value of ${poolAmountClaimed} SCN has been claimed.`,
+        };
+      }),
+
+    /** Admin: backfill tear codes for existing cards */
+    backfillTearCodes: protectedProcedure.mutation(async () => {
+      const count = await backfillTearCodes();
+      return { success: true, count, message: `Tear codes assigned to ${count} cards` };
+    }),
   }),
 });
 

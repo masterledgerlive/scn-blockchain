@@ -15,6 +15,13 @@
       "when": 1775388300000,
       "tag": "0001_scn_full_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775408162520,
+      "tag": "0002_charming_mimic",
+      "breakpoints": true
     }
   ]
 }

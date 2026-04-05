@@ -63,6 +63,12 @@ export const cards = mysqlTable("cards", {
   marketValue: decimal("marketValue", { precision: 12, scale: 2 }).default("0.00"),
   isInSlab: boolean("isInSlab").default(false).notNull(),
   isListed: boolean("isListed").default(false).notNull(),
+  isBurned: boolean("isBurned").default(false).notNull(),
+  burnedAt: timestamp("burnedAt"),
+  tearCode: varchar("tearCode", { length: 32 }).unique(),
+  tearCodeRevealed: boolean("tearCodeRevealed").default(false).notNull(),
+  seriesTotal: int("seriesTotal"),
+  seriesRemaining: int("seriesRemaining"),
   metadata: json("metadata").$type<Record<string, unknown>>(),
   mintedAt: timestamp("mintedAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -185,7 +191,7 @@ export const scnTransactions = mysqlTable("scn_transactions", {
   id: int("id").autoincrement().primaryKey(),
   txHash: varchar("txHash", { length: 128 }).notNull().unique(),
   blockNumber: bigint("blockNumber", { mode: "number" }).notNull(),
-  txType: mysqlEnum("txType", ["mint", "transfer", "sale", "slab_create", "slab_open", "verify", "dao_deposit", "dao_vote", "governance"]).notNull(),
+  txType: mysqlEnum("txType", ["mint", "transfer", "sale", "slab_create", "slab_open", "verify", "dao_deposit", "dao_vote", "governance", "burn", "burn_pool_contribute", "burn_pool_claim"]).notNull(),
   fromAddress: varchar("fromAddress", { length: 64 }),
   toAddress: varchar("toAddress", { length: 64 }),
   value: decimal("value", { precision: 12, scale: 6 }).default("0.000000"),
@@ -196,3 +202,55 @@ export const scnTransactions = mysqlTable("scn_transactions", {
 });
 
 export type ScnTransaction = typeof scnTransactions.$inferSelect;
+
+// ─── Burn Mechanism Tables ────────────────────────────────────────────────────
+
+export const burnPools = mysqlTable("burn_pools", {
+  id: int("id").autoincrement().primaryKey(),
+  poolId: varchar("poolId", { length: 64 }).notNull().unique(),
+  cardId: int("cardId").notNull(),
+  cardTokenId: varchar("cardTokenId", { length: 64 }).notNull(),
+  status: mysqlEnum("status", ["open", "threshold_met", "claimed", "expired", "cancelled"]).default("open").notNull(),
+  totalContributed: decimal("totalContributed", { precision: 18, scale: 6 }).default("0.000000").notNull(),
+  thresholdAmount: decimal("thresholdAmount", { precision: 18, scale: 6 }).notNull(),
+  cardMarketValue: decimal("cardMarketValue", { precision: 12, scale: 2 }).default("0.00"),
+  contributorCount: int("contributorCount").default(0).notNull(),
+  burnTxHash: varchar("burnTxHash", { length: 128 }),
+  claimedAt: timestamp("claimedAt"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BurnPool = typeof burnPools.$inferSelect;
+
+export const burnPoolContributions = mysqlTable("burn_pool_contributions", {
+  id: int("id").autoincrement().primaryKey(),
+  poolId: int("poolId").notNull(),
+  contributorWalletId: int("contributorWalletId").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 6 }).notNull(),
+  txHash: varchar("txHash", { length: 128 }).notNull().unique(),
+  refunded: boolean("refunded").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BurnPoolContribution = typeof burnPoolContributions.$inferSelect;
+
+export const burnEvents = mysqlTable("burn_events", {
+  id: int("id").autoincrement().primaryKey(),
+  burnId: varchar("burnId", { length: 64 }).notNull().unique(),
+  cardId: int("cardId").notNull(),
+  cardTokenId: varchar("cardTokenId", { length: 64 }).notNull(),
+  burnerWalletId: int("burnerWalletId").notNull(),
+  tearCodeSubmitted: varchar("tearCodeSubmitted", { length: 32 }).notNull(),
+  txHash: varchar("txHash", { length: 128 }).notNull().unique(),
+  blockNumber: bigint("blockNumber", { mode: "number" }).notNull(),
+  poolId: int("poolId"),
+  poolAmountClaimed: decimal("poolAmountClaimed", { precision: 18, scale: 6 }).default("0.000000"),
+  scarcityDividendPerCard: decimal("scarcityDividendPerCard", { precision: 18, scale: 6 }).default("0.000000"),
+  seriesBeforeBurn: int("seriesBeforeBurn"),
+  seriesAfterBurn: int("seriesAfterBurn"),
+  burnedAt: timestamp("burnedAt").defaultNow().notNull(),
+});
+
+export type BurnEvent = typeof burnEvents.$inferSelect;

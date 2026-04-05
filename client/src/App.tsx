@@ -14,6 +14,7 @@ import DAOPage from "./pages/DAOPage";
 import CollectionPage from "./pages/CollectionPage";
 import ExplorerPage from "./pages/ExplorerPage";
 import BotDashboard from "./pages/BotDashboard";
+import BurnPage from "./pages/BurnPage";
 import NavLayout from "./components/NavLayout";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
         <Route path="/collection" component={CollectionPage} />
         <Route path="/explorer" component={ExplorerPage} />
         <Route path="/bots" component={BotDashboard} />
+        <Route path="/burn" component={BurnPage} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

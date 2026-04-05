@@ -377,7 +377,7 @@ export async function getUserVotes(voterWalletId: number) {
 export async function recordTransaction(data: {
   txHash: string;
   blockNumber: number;
-  txType: "mint" | "transfer" | "sale" | "slab_create" | "slab_open" | "verify" | "dao_deposit" | "dao_vote" | "governance";
+  txType: "mint" | "transfer" | "sale" | "slab_create" | "slab_open" | "verify" | "dao_deposit" | "dao_vote" | "governance" | "burn" | "burn_pool_contribute" | "burn_pool_claim";
   fromAddress?: string;
   toAddress?: string;
   value?: string;
@@ -407,4 +407,146 @@ export async function getNetworkStats() {
     totalTransactions: txCount?.count ?? 0,
     totalWallets: walletCount?.count ?? 0,
   };
+}
+
+// ─── Burn Mechanism ───────────────────────────────────────────────────────────
+
+import type { BurnPool, BurnEvent } from "../drizzle/schema";
+import { burnPools, burnPoolContributions, burnEvents } from "../drizzle/schema";
+
+/** Generate a unique tear code: 4 groups of 4 alphanumeric chars like dollar bill strip */
+export function generateTearCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const group = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return `${group()}-${group()}-${group()}-${group()}`;
+}
+
+/** Assign tear codes to all existing cards that don't have one */
+export async function backfillTearCodes(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const untagged = await db.select({ id: cards.id }).from(cards).where(sql`tearCode IS NULL`);
+  let count = 0;
+  for (const card of untagged) {
+    const tearCode = generateTearCode();
+    await db.update(cards).set({ tearCode, seriesTotal: 50, seriesRemaining: 50 }).where(eq(cards.id, card.id));
+    count++;
+  }
+  return count;
+}
+
+export async function getBurnPoolByCardId(cardId: number): Promise<BurnPool | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(burnPools)
+    .where(and(eq(burnPools.cardId, cardId), sql`status IN ('open','threshold_met')`))
+    .orderBy(desc(burnPools.createdAt))
+    .limit(1);
+  return result[0];
+}
+
+export async function getAllBurnPools(limit = 20): Promise<BurnPool[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(burnPools).orderBy(desc(burnPools.createdAt)).limit(limit);
+}
+
+export async function createBurnPool(data: {
+  poolId: string;
+  cardId: number;
+  cardTokenId: string;
+  thresholdAmount: string;
+  cardMarketValue: string;
+  expiresAt: Date;
+}): Promise<BurnPool> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(burnPools).values({ ...data, status: "open", totalContributed: "0.000000", contributorCount: 0 });
+  const result = await db.select().from(burnPools).where(eq(burnPools.poolId, data.poolId)).limit(1);
+  return result[0]!;
+}
+
+export async function contributeToPool(data: {
+  poolId: number;
+  contributorWalletId: number;
+  amount: string;
+  txHash: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(burnPoolContributions).values({ ...data, refunded: false });
+  await db
+    .update(burnPools)
+    .set({
+      totalContributed: sql`totalContributed + ${data.amount}`,
+      contributorCount: sql`contributorCount + 1`,
+    })
+    .where(eq(burnPools.id, data.poolId));
+  // Check if threshold met
+  const pool = await db.select().from(burnPools).where(eq(burnPools.id, data.poolId)).limit(1);
+  if (pool[0] && parseFloat(pool[0].totalContributed) >= parseFloat(pool[0].thresholdAmount)) {
+    await db.update(burnPools).set({ status: "threshold_met" }).where(eq(burnPools.id, data.poolId));
+  }
+}
+
+export async function getPoolContributions(poolId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(burnPoolContributions).where(eq(burnPoolContributions.poolId, poolId)).orderBy(desc(burnPoolContributions.createdAt));
+}
+
+export async function executeBurn(data: {
+  burnId: string;
+  cardId: number;
+  cardTokenId: string;
+  burnerWalletId: number;
+  tearCodeSubmitted: string;
+  txHash: string;
+  blockNumber: number;
+  poolId?: number;
+  poolAmountClaimed?: string;
+  scarcityDividendPerCard?: string;
+  seriesBeforeBurn?: number;
+  seriesAfterBurn?: number;
+}): Promise<BurnEvent> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // Mark card as burned
+  await db.update(cards).set({ isBurned: true, burnedAt: new Date(), tearCodeRevealed: true }).where(eq(cards.id, data.cardId));
+  // Update series remaining count for all cards in same series
+  if (data.seriesAfterBurn !== undefined) {
+    const card = await getCardById(data.cardId);
+    if (card?.series) {
+      await db.update(cards).set({ seriesRemaining: data.seriesAfterBurn }).where(eq(cards.series, card.series));
+    }
+  }
+  // Mark pool as claimed
+  if (data.poolId) {
+    await db.update(burnPools).set({ status: "claimed", claimedAt: new Date(), burnTxHash: data.txHash }).where(eq(burnPools.id, data.poolId));
+  }
+  // Record burn event
+  await db.insert(burnEvents).values({
+    burnId: data.burnId,
+    cardId: data.cardId,
+    cardTokenId: data.cardTokenId,
+    burnerWalletId: data.burnerWalletId,
+    tearCodeSubmitted: data.tearCodeSubmitted,
+    txHash: data.txHash,
+    blockNumber: data.blockNumber,
+    poolId: data.poolId ?? null,
+    poolAmountClaimed: data.poolAmountClaimed ?? "0.000000",
+    scarcityDividendPerCard: data.scarcityDividendPerCard ?? "0.000000",
+    seriesBeforeBurn: data.seriesBeforeBurn ?? null,
+    seriesAfterBurn: data.seriesAfterBurn ?? null,
+  });
+  const result = await db.select().from(burnEvents).where(eq(burnEvents.burnId, data.burnId)).limit(1);
+  return result[0]!;
+}
+
+export async function getRecentBurnEvents(limit = 20): Promise<BurnEvent[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(burnEvents).orderBy(desc(burnEvents.burnedAt)).limit(limit);
 }

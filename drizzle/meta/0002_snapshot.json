@@ -1,9 +1,344 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "21af8ffd-8b55-4816-9e85-acc83d6a8478",
-  "prevId": "0af91f05-6e7a-4f30-907b-215188d7e105",
+  "id": "c30ee829-ec4d-44a5-aa2e-a9d8d8bce3f5",
+  "prevId": "21af8ffd-8b55-4816-9e85-acc83d6a8478",
   "tables": {
+    "burn_events": {
+      "name": "burn_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "burnId": {
+          "name": "burnId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cardId": {
+          "name": "cardId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cardTokenId": {
+          "name": "cardTokenId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "burnerWalletId": {
+          "name": "burnerWalletId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tearCodeSubmitted": {
+          "name": "tearCodeSubmitted",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "txHash": {
+          "name": "txHash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "blockNumber": {
+          "name": "blockNumber",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "poolId": {
+          "name": "poolId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "poolAmountClaimed": {
+          "name": "poolAmountClaimed",
+          "type": "decimal(18,6)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0.000000'"
+        },
+        "scarcityDividendPerCard": {
+          "name": "scarcityDividendPerCard",
+          "type": "decimal(18,6)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0.000000'"
+        },
+        "seriesBeforeBurn": {
+          "name": "seriesBeforeBurn",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "seriesAfterBurn": {
+          "name": "seriesAfterBurn",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "burnedAt": {
+          "name": "burnedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "burn_events_id": {
+          "name": "burn_events_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "burn_events_burnId_unique": {
+          "name": "burn_events_burnId_unique",
+          "columns": [
+            "burnId"
+          ]
+        },
+        "burn_events_txHash_unique": {
+          "name": "burn_events_txHash_unique",
+          "columns": [
+            "txHash"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "burn_pool_contributions": {
+      "name": "burn_pool_contributions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "poolId": {
+          "name": "poolId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "contributorWalletId": {
+          "name": "contributorWalletId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "decimal(18,6)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "txHash": {
+          "name": "txHash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "refunded": {
+          "name": "refunded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "burn_pool_contributions_id": {
+          "name": "burn_pool_contributions_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "burn_pool_contributions_txHash_unique": {
+          "name": "burn_pool_contributions_txHash_unique",
+          "columns": [
+            "txHash"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "burn_pools": {
+      "name": "burn_pools",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "poolId": {
+          "name": "poolId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cardId": {
+          "name": "cardId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cardTokenId": {
+          "name": "cardTokenId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "enum('open','threshold_met','claimed','expired','cancelled')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'open'"
+        },
+        "totalContributed": {
+          "name": "totalContributed",
+          "type": "decimal(18,6)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'0.000000'"
+        },
+        "thresholdAmount": {
+          "name": "thresholdAmount",
+          "type": "decimal(18,6)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cardMarketValue": {
+          "name": "cardMarketValue",
+          "type": "decimal(12,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0.00'"
+        },
+        "contributorCount": {
+          "name": "contributorCount",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "burnTxHash": {
+          "name": "burnTxHash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "claimedAt": {
+          "name": "claimedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "burn_pools_id": {
+          "name": "burn_pools_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "burn_pools_poolId_unique": {
+          "name": "burn_pools_poolId_unique",
+          "columns": [
+            "poolId"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
     "cards": {
       "name": "cards",
       "columns": {
@@ -154,6 +489,50 @@
           "autoincrement": false,
           "default": false
         },
+        "isBurned": {
+          "name": "isBurned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "burnedAt": {
+          "name": "burnedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tearCode": {
+          "name": "tearCode",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tearCodeRevealed": {
+          "name": "tearCodeRevealed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "seriesTotal": {
+          "name": "seriesTotal",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "seriesRemaining": {
+          "name": "seriesRemaining",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "metadata": {
           "name": "metadata",
           "type": "json",
@@ -200,6 +579,12 @@
           "name": "cards_pufHash_unique",
           "columns": [
             "pufHash"
+          ]
+        },
+        "cards_tearCode_unique": {
+          "name": "cards_tearCode_unique",
+          "columns": [
+            "tearCode"
           ]
         }
       },
@@ -768,7 +1153,7 @@
         },
         "txType": {
           "name": "txType",
-          "type": "enum('mint','transfer','sale','slab_create','slab_open','verify','dao_deposit','dao_vote','governance')",
+          "type": "enum('mint','transfer','sale','slab_create','slab_open','verify','dao_deposit','dao_vote','governance','burn','burn_pool_contribute','burn_pool_claim')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
