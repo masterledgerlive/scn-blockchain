@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1775388055163,
+      "tag": "0000_light_the_fury",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775388300000,
+      "tag": "0001_scn_full_schema",
+      "breakpoints": true
+    }
+  ]
 }
