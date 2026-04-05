@@ -46,18 +46,18 @@
 - [x] All vitest tests passing after fixes (12/12)
 
 ## Open Source Declaration & IP Protection
-- [ ] Draft SCN Open Source Declaration (MIT-style, prior art publication)
-- [ ] Define proprietary vs. open-source boundary for SCN token code
-- [ ] Legal analysis: burn pool mechanism legality
+- [x] Draft SCN Open Source Declaration (MIT-style, prior art publication)
+- [x] Define proprietary vs. open-source boundary for SCN token code
+- [x] Legal analysis: burn pool mechanism legality
 
 ## Burn Mechanism
-- [ ] Add burn_pools and burn_events tables to schema
-- [ ] Add burn router: initiateBurn, contributeToPool, claimBurnValue, getBurnPool
-- [ ] Tear code generation: unique alphanumeric code embedded in card (like dollar bill strip)
-- [ ] Burn verification: submit tear code to confirm physical destruction
-- [ ] Burn pool: community pools SCN tokens to incentivize card burn
-- [ ] Value redistribution: when pool threshold met, distribute to remaining card holders
-- [ ] Burn UI page: BurnPage.tsx with pool display, tear code entry, contribution flow
-- [ ] Add Burn nav link to NavLayout
-- [ ] Add route to App.tsx
-- [ ] Vitest tests for burn procedures
+- [x] Add burn_pools and burn_events tables to schema
+- [x] Add burn router: createPool, contribute, revealTearCode, executeBurn, pools, recentBurns
+- [x] Tear code generation: unique alphanumeric code embedded in card (like dollar bill strip)
+- [x] Burn verification: submit tear code to confirm physical destruction on-chain
+- [x] Burn pool: community pools SCN tokens to incentivize card burn
+- [x] Value redistribution: 10% scarcity dividend per remaining series card on burn
+- [x] Burn UI page: BurnPage.tsx with pool display, tear code entry, contribution flow
+- [x] Add Burn nav link to NavLayout
+- [x] Add /burn route to App.tsx
+- [x] Vitest tests for burn procedures (covered in scn-mutations.test.ts — 46 total passing)
