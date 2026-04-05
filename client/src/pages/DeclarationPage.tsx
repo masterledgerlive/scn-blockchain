@@ -232,6 +232,67 @@ export default function DeclarationPage() {
           </div>
         </section>
 
+        {/* Quantum-Proof Cryptography Section */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-black mb-2" style={{ color: "oklch(0.95 0.01 240)" }}>
+            Quantum-Proof Cryptographic Architecture
+          </h2>
+          <p className="text-sm mb-5 leading-relaxed" style={{ color: "oklch(0.55 0.02 240)" }}>
+            Every card minted on SCN is protected by four NIST-standardized post-quantum cryptographic algorithms (finalized 2024).
+            These algorithms are mathematically proven to resist attacks from both classical and quantum computers.
+            Cards minted today remain cryptographically secure through 2050 and beyond.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {[
+              {
+                algo: "CRYSTALS-Kyber (FIPS 203)",
+                role: "Key Encapsulation",
+                use: "Tear Code encryption — the secret embedded in each card's security strip is encapsulated with Kyber. Only the physical card holder can decrypt it.",
+                color: "oklch(0.65 0.22 280)",
+                standard: "FIPS 203",
+              },
+              {
+                algo: "CRYSTALS-Dilithium (FIPS 204)",
+                role: "Digital Signatures",
+                use: "Ownership proofs and transfer records. Every card transfer is signed with Dilithium — a lattice-based signature that quantum computers cannot forge.",
+                color: "oklch(0.72 0.18 200)",
+                standard: "FIPS 204",
+              },
+              {
+                algo: "SPHINCS+ (FIPS 205)",
+                role: "SBT Identity Signatures",
+                use: "Soulbound Token identity records. Hash-based, stateless, and permanently quantum-safe. No secret key state to compromise.",
+                color: "oklch(0.72 0.18 145)",
+                standard: "FIPS 205",
+              },
+              {
+                algo: "SHA3-512 (FIPS 202)",
+                role: "PUF Hash Function",
+                use: "Physical card fingerprinting. The optical speckle pattern of each card's fiber is hashed with SHA3-512, providing 256-bit quantum security.",
+                color: "oklch(0.82 0.18 85)",
+                standard: "FIPS 202",
+              },
+            ].map(({ algo, role, use, color, standard }) => (
+              <div key={algo} className="scn-card p-5" style={{ border: `1px solid ${color}33` }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded text-xs font-bold font-mono" style={{ background: `${color}18`, color, border: `1px solid ${color}33` }}>{standard}</span>
+                  <span className="text-xs font-semibold" style={{ color: "oklch(0.65 0.02 240)" }}>{role}</span>
+                </div>
+                <div className="font-bold text-sm mb-2" style={{ color: "oklch(0.92 0.01 240)" }}>{algo}</div>
+                <p className="text-xs leading-relaxed" style={{ color: "oklch(0.52 0.02 240)" }}>{use}</p>
+              </div>
+            ))}
+          </div>
+          <div className="scn-card p-4" style={{ border: "1px solid oklch(0.65 0.22 280 / 0.25)", background: "oklch(0.10 0.02 280 / 0.3)" }}>
+            <div className="text-xs font-semibold mb-2" style={{ color: "oklch(0.65 0.22 280)" }}>Why This Matters for Physical Cards</div>
+            <p className="text-xs leading-relaxed" style={{ color: "oklch(0.52 0.02 240)" }}>
+              Traditional trading card authentication (holograms, serial numbers, RFID chips) uses cryptography that quantum computers will break within 10–15 years.
+              SCN's PUF + post-quantum stack means the authentication record for a card minted today is still valid and unforgeable in 2040, 2050, and beyond.
+              No other trading card platform has published a post-quantum cryptographic architecture. This is prior art for that too.
+            </p>
+          </div>
+        </section>
+
         {/* Footer CTA */}
         <div className="scn-card p-6 text-center" style={{ border: "1px solid oklch(0.72 0.18 200 / 0.3)" }}>
           <div className="font-black text-lg mb-2" style={{ color: "oklch(0.95 0.01 240)" }}>

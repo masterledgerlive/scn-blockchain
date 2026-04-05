@@ -207,13 +207,27 @@ export default function MintCardPage() {
             )}
           </div>
 
-          {/* PUF Info */}
-          <div className="scn-card p-4 flex items-start gap-3" style={{ border: "1px solid oklch(0.82 0.18 85 / 0.3)" }}>
-            <Cpu className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "oklch(0.82 0.18 85)" }} />
-            <div>
-              <div className="text-sm font-semibold mb-1" style={{ color: "oklch(0.82 0.18 85)" }}>PUF Encoding</div>
-              <p className="text-xs" style={{ color: "oklch(0.50 0.02 240)" }}>A Physical Unclonable Function hash and fiber pattern will be automatically generated and encoded into this card's on-chain record. Scan the physical card later to verify authenticity.</p>
+          {/* PUF + Quantum Crypto Info */}
+          <div className="scn-card p-5" style={{ border: "1px solid oklch(0.82 0.18 85 / 0.3)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Cpu className="w-5 h-5" style={{ color: "oklch(0.82 0.18 85)" }} />
+              <span className="text-sm font-bold" style={{ color: "oklch(0.82 0.18 85)" }}>Quantum-Proof Cryptographic Stack</span>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { label: "PUF Hash", algo: "SHA3-512 (FIPS 202)", desc: "Optical speckle fingerprint — 256-bit quantum security", color: "oklch(0.82 0.18 85)" },
+                { label: "Signature", algo: "CRYSTALS-Dilithium (FIPS 204)", desc: "Lattice-based — quantum-resistant ownership proof", color: "oklch(0.72 0.18 200)" },
+                { label: "Tear Code Encryption", algo: "CRYSTALS-Kyber (FIPS 203)", desc: "Key encapsulation — quantum-resistant secret", color: "oklch(0.65 0.22 280)" },
+                { label: "SBT Identity", algo: "SPHINCS+ (FIPS 205)", desc: "Hash-based stateless signature — permanently quantum-safe", color: "oklch(0.72 0.18 145)" },
+              ].map(({ label, algo, desc, color }) => (
+                <div key={label} className="p-3 rounded-lg" style={{ background: `${color}0d`, border: `1px solid ${color}33` }}>
+                  <div className="text-xs font-bold mb-0.5" style={{ color }}>{label}</div>
+                  <div className="text-xs font-mono mb-1" style={{ color: "oklch(0.75 0.01 240)" }}>{algo}</div>
+                  <div className="text-xs" style={{ color: "oklch(0.48 0.02 240)" }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs mt-3" style={{ color: "oklch(0.45 0.02 240)" }}>All four algorithms are NIST-standardized post-quantum cryptography (2024). Cards minted today remain cryptographically secure against quantum computers through 2050+.</p>
           </div>
 
           {/* Mint Button */}

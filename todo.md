@@ -81,3 +81,19 @@
 - [ ] Add Declaration link to NavLayout navigation
 - [ ] Add Declaration link to Home page footer and legal banner
 - [ ] Add route to App.tsx
+
+## Platform Refinement & Quantum-Proof Architecture (April 2026)
+
+- [ ] Write SCN Technical Whitepaper: PUF encryption, quantum-proof crypto, slab technology stack
+- [ ] Audit and refine WalletPage — SBT display, trust score, key generation UX
+- [ ] Audit and refine MintCardPage — PUF hash generation, AI scrub flow, image upload
+- [ ] Audit and refine SlabPage — slab sealing, odds display, Schrödinger mechanism
+- [ ] Audit and refine VerifyPage — PUF scan simulation, grade display, chain of custody
+- [ ] Audit and refine MarketplacePage — buy/sell flow, price display, filter UX
+- [ ] Audit and refine DAOPage — voting threshold display, proposal creation, genesis lock countdown
+- [ ] Audit and refine BurnPage — tear code reveal, pool contribution, burn execution
+- [ ] Audit and refine CollectionPage — card grid, verification badges, market value
+- [ ] Audit and refine ExplorerPage — transaction feed, network stats, search
+- [ ] Upgrade crypto references: BLAKE3, SHA3-512, Kyber/Dilithium quantum-proof
+- [ ] Update Declaration page with quantum-proof cryptography section
+- [ ] Push all changes to GitHub
