@@ -5,6 +5,9 @@
 **Publication Date:** April 5, 2026
 **Author:** None. This document has no author. It belongs to everyone.
 **Status:** Public Domain — Irrevocable — No Owner — No Foundation — No Controller
+**GitHub Repository:** [https://github.com/masterledgerlive/scn-blockchain](https://github.com/masterledgerlive/scn-blockchain)
+**License:** [![License: MIT](https://img.shields.io/badge/License-MIT-cyan.svg)](https://github.com/masterledgerlive/scn-blockchain/blob/main/LICENSE)
+**Prior Art Commit:** [https://github.com/masterledgerlive/scn-blockchain/commits/main](https://github.com/masterledgerlive/scn-blockchain/commits/main)
 
 ---
 
@@ -39,6 +42,15 @@ This section exists to prevent mischaracterization by any party, including regul
 ## Part III — Prior Art Publication (Anti-Patent Shield)
 
 The following concepts are hereby published as prior art under 35 U.S.C. § 102(a)(1) and equivalent international patent law provisions. Any patent application filed after April 5, 2026 that claims any of these concepts is invalid because this document — a publicly accessible printed publication — predates any such filing.
+
+This prior art publication is permanently recorded at the following public URLs, each of which constitutes an independent prior art reference:
+
+- **GitHub Repository (MIT Licensed Source Code):** [https://github.com/masterledgerlive/scn-blockchain](https://github.com/masterledgerlive/scn-blockchain)
+- **Declaration (this document on GitHub):** [https://github.com/masterledgerlive/scn-blockchain/blob/main/SCN_Open_Source_Declaration_v2.md](https://github.com/masterledgerlive/scn-blockchain/blob/main/SCN_Open_Source_Declaration_v2.md)
+- **MIT License on GitHub:** [https://github.com/masterledgerlive/scn-blockchain/blob/main/LICENSE](https://github.com/masterledgerlive/scn-blockchain/blob/main/LICENSE)
+- **Commit History (timestamped prior art record):** [https://github.com/masterledgerlive/scn-blockchain/commits/main](https://github.com/masterledgerlive/scn-blockchain/commits/main)
+
+The GitHub commit timestamps are cryptographically signed and indexed by major search engines, constituting a verifiable public disclosure record for patent examination purposes.
 
 | Concept | Prior Art Disclosure Summary |
 |---|---|
