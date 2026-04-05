@@ -75,3 +75,9 @@
 - [x] Update all UI copy to remove ownership/acquisition framing (Home + DAO pages rewritten)
 - [x] Legal restructure memo — Part VI of Declaration v2.0 covers this in full
 - [ ] Push final declaration to public GitHub repo (pending user confirmation)
+
+## Declaration Page & GitHub Link on Site
+- [ ] Build /declaration page with MIT badge, GitHub link, prior art table, all 9 concepts
+- [ ] Add Declaration link to NavLayout navigation
+- [ ] Add Declaration link to Home page footer and legal banner
+- [ ] Add route to App.tsx

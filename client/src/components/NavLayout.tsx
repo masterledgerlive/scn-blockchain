@@ -20,6 +20,9 @@ import {
   Bot,
   FlaskConical,
   Flame,
+  Shield,
+  Github,
+  ExternalLink,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -36,6 +39,7 @@ const navItems = [
   { href: "/explorer", label: "Explorer", icon: Activity },
   { href: "/bots", label: "AI Bots", icon: Bot },
   { href: "/burn", label: "Burn Mechanism", icon: Flame },
+  { href: "/declaration", label: "Open Source / MIT", icon: Shield },
 ];
 
 export default function NavLayout({ children }: { children: ReactNode }) {
@@ -95,6 +99,17 @@ export default function NavLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* MIT / GitHub badge */}
+        <div className="px-3 pb-2">
+          <a href="https://github.com/masterledgerlive/scn-blockchain" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-white/5"
+            style={{ color: "oklch(0.72 0.18 145)", border: "1px solid oklch(0.72 0.18 145 / 0.25)", background: "oklch(0.72 0.18 145 / 0.05)" }}>
+            <Github className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="flex-1 truncate">MIT Licensed · Prior Art</span>
+            <ExternalLink className="w-3 h-3 flex-shrink-0 opacity-60" />
+          </a>
+        </div>
 
         {/* User section */}
         <div className="px-4 py-4" style={{ borderTop: "1px solid oklch(0.18 0.02 240)" }}>
