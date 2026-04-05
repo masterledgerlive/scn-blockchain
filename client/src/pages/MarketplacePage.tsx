@@ -176,6 +176,17 @@ export default function MarketplacePage() {
                       </div>
                     </div>
                     {isAuthenticated ? (
+                      listing.sellerWalletId ? (
+                        <Button
+                          size="sm"
+                          onClick={() => cancelListing.mutate({ listingId: listing.listingId })}
+                          disabled={cancelListing.isPending}
+                          variant="outline"
+                          style={{ borderColor: "oklch(0.60 0.22 25 / 0.4)", color: "oklch(0.60 0.22 25)", fontSize: "0.75rem" }}
+                        >
+                          Cancel
+                        </Button>
+                      ) : (
                       <Button
                         size="sm"
                         onClick={() => buyCard.mutate({ listingId: listing.listingId })}
@@ -185,7 +196,7 @@ export default function MarketplacePage() {
                       >
                         <ShoppingCart className="w-3.5 h-3.5" />
                         Buy
-                      </Button>
+                      </Button>)
                     ) : (
                       <a href={getLoginUrl()}>
                         <Button size="sm" variant="outline" style={{ borderColor: "oklch(0.25 0.02 240)", color: "oklch(0.70 0.02 240)", fontSize: "0.75rem" }}>Sign In</Button>

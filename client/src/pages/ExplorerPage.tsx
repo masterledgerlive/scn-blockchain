@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Activity, Layers, Package, ArrowRight, TrendingUp, Zap, Search } from "lucide-react";
+import { Activity, Layers, Package, ArrowRight, TrendingUp, Zap, Search, Copy, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const TX_TYPE_COLORS: Record<string, string> = {
@@ -10,6 +10,10 @@ const TX_TYPE_COLORS: Record<string, string> = {
   verification: "oklch(0.65 0.22 280)",
   slab_seal: "oklch(0.60 0.22 25)",
   vote: "oklch(0.55 0.02 240)",
+  burn: "oklch(0.60 0.22 25)",
+  burn_contribute: "oklch(0.65 0.20 30)",
+  slab_create: "oklch(0.60 0.22 25)",
+  wallet_create: "oklch(0.72 0.18 145)",
 };
 
 export default function ExplorerPage() {
@@ -98,7 +102,14 @@ export default function ExplorerPage() {
                           </span>
                           <span className="text-xs mono" style={{ color: "oklch(0.40 0.02 240)" }}>Block #{tx.blockNumber.toLocaleString()}</span>
                         </div>
-                        <code className="text-xs mono" style={{ color: "oklch(0.50 0.02 240)" }}>{tx.txHash.substring(0, 28)}...</code>
+                        <button
+                          className="flex items-center gap-1 group"
+                          onClick={() => { navigator.clipboard.writeText(tx.txHash); }}
+                          title="Copy tx hash"
+                        >
+                          <code className="text-xs mono group-hover:text-white transition-colors" style={{ color: "oklch(0.50 0.02 240)" }}>{tx.txHash.substring(0, 28)}...</code>
+                          <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "oklch(0.55 0.02 240)" }} />
+                        </button>
                         {(tx.fromAddress || tx.toAddress) && (
                           <div className="flex items-center gap-1 mt-1 text-xs" style={{ color: "oklch(0.40 0.02 240)" }}>
                             {tx.fromAddress && <span className="mono truncate max-w-24">{tx.fromAddress.substring(0, 12)}...</span>}

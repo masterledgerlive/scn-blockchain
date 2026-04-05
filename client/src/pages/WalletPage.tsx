@@ -174,11 +174,22 @@ export default function WalletPage() {
             </div>
           </div>
 
-          {/* Public Key */}
+          {/* Public Key + Crypto Info */}
           <div className="scn-card p-6">
-            <div className="text-xs font-semibold mb-3" style={{ color: "oklch(0.55 0.02 240)" }}>PUBLIC KEY</div>
-            <div className="p-3 rounded-lg overflow-hidden" style={{ background: "oklch(0.09 0.01 240)", border: "1px solid oklch(0.18 0.02 240)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-semibold" style={{ color: "oklch(0.55 0.02 240)" }}>PUBLIC KEY</div>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold" style={{ background: "oklch(0.65 0.22 280 / 0.1)", border: "1px solid oklch(0.65 0.22 280 / 0.3)", color: "oklch(0.65 0.22 280)" }}>
+                SPHINCS+ (FIPS 205)
+              </div>
+            </div>
+            <div className="p-3 rounded-lg overflow-hidden mb-3" style={{ background: "oklch(0.09 0.01 240)", border: "1px solid oklch(0.18 0.02 240)" }}>
               <code className="text-xs mono break-all" style={{ color: "oklch(0.40 0.02 240)" }}>{wallet.publicKey}</code>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { navigator.clipboard.writeText(wallet.publicKey); toast.success("Public key copied!"); }} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors" style={{ color: "oklch(0.55 0.02 240)", border: "1px solid oklch(0.22 0.02 240)" }}>
+                <Copy className="w-3 h-3" /> Copy Key
+              </button>
+              <span className="text-xs" style={{ color: "oklch(0.40 0.02 240)" }}>Hash-based stateless signature — quantum-safe forever</span>
             </div>
           </div>
 

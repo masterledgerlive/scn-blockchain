@@ -74,26 +74,26 @@
 - [x] Add community liquidity reserve (CLR — Community Liquidity Reserve, not "pool")
 - [x] Update all UI copy to remove ownership/acquisition framing (Home + DAO pages rewritten)
 - [x] Legal restructure memo — Part VI of Declaration v2.0 covers this in full
-- [ ] Push final declaration to public GitHub repo (pending user confirmation)
+- [x] Push final declaration to public GitHub repo (live at github.com/masterledgerlive/scn-blockchain)
 
 ## Declaration Page & GitHub Link on Site
-- [ ] Build /declaration page with MIT badge, GitHub link, prior art table, all 9 concepts
-- [ ] Add Declaration link to NavLayout navigation
-- [ ] Add Declaration link to Home page footer and legal banner
-- [ ] Add route to App.tsx
+- [x] Build /declaration page with MIT badge, GitHub link, prior art table, all 9 concepts
+- [x] Add Declaration link to NavLayout navigation
+- [x] Add Declaration link to Home page footer and legal banner
+- [x] Add /declaration route to App.tsx
 
 ## Platform Refinement & Quantum-Proof Architecture (April 2026)
 
-- [ ] Write SCN Technical Whitepaper: PUF encryption, quantum-proof crypto, slab technology stack
-- [ ] Audit and refine WalletPage — SBT display, trust score, key generation UX
-- [ ] Audit and refine MintCardPage — PUF hash generation, AI scrub flow, image upload
-- [ ] Audit and refine SlabPage — slab sealing, odds display, Schrödinger mechanism
-- [ ] Audit and refine VerifyPage — PUF scan simulation, grade display, chain of custody
-- [ ] Audit and refine MarketplacePage — buy/sell flow, price display, filter UX
-- [ ] Audit and refine DAOPage — voting threshold display, proposal creation, genesis lock countdown
-- [ ] Audit and refine BurnPage — tear code reveal, pool contribution, burn execution
-- [ ] Audit and refine CollectionPage — card grid, verification badges, market value
-- [ ] Audit and refine ExplorerPage — transaction feed, network stats, search
-- [ ] Upgrade crypto references: BLAKE3, SHA3-512, Kyber/Dilithium quantum-proof
-- [ ] Update Declaration page with quantum-proof cryptography section
-- [ ] Push all changes to GitHub
+- [x] Write SCN Technical Whitepaper: PUF encryption, quantum-proof crypto, slab technology stack
+- [x] Audit and refine WalletPage — SBT display, trust score, key generation UX (clean)
+- [x] Audit and refine MintCardPage — PUF hash generation, AI scrub flow, quantum crypto stack panel
+- [x] Audit and refine SlabPage — slab sealing, odds display, Schrödinger mechanism (clean)
+- [x] Audit and refine VerifyPage — PUF scan simulation, grade display, chain of custody (clean)
+- [x] Audit and refine MarketplacePage — buy/sell flow, price display, filter UX (clean)
+- [x] Audit and refine DAOPage — voting threshold display, proposal creation, genesis lock countdown (clean)
+- [x] Audit and refine BurnPage — tear code reveal, pool contribution, burn execution (clean)
+- [x] Audit and refine CollectionPage — card grid, verification badges, market value (clean)
+- [x] Audit and refine ExplorerPage — transaction feed, network stats, search (clean)
+- [x] Upgrade crypto references: SHA3-512, Kyber (FIPS 203), Dilithium (FIPS 204), SPHINCS+ (FIPS 205)
+- [x] Update Declaration page with quantum-proof cryptography section (4-algo grid + physical card note)
+- [x] Push all changes to GitHub (commit f16b394)

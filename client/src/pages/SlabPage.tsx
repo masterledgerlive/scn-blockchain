@@ -4,7 +4,7 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Shield, Lock, Zap, CheckCircle, Package, Radio } from "lucide-react";
+import { Shield, Lock, Zap, CheckCircle, Package, Radio, Eye } from "lucide-react";
 import { Link } from "wouter";
 
 export default function SlabPage() {

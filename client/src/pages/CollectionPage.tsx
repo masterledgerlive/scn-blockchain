@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { LayoutGrid, Layers, Package, CheckCircle, Tag, TrendingUp, Zap } from "lucide-react";
+import { LayoutGrid, Layers, Package, CheckCircle, Tag, TrendingUp, Zap, ShieldCheck, Flame } from "lucide-react";
 import { Link } from "wouter";
 
 const EDITION_COLORS: Record<string, string> = {
@@ -146,6 +146,26 @@ export default function CollectionPage() {
                   {card.pufHash && (
                     <div className="mt-2 text-xs mono truncate" style={{ color: "oklch(0.35 0.02 240)" }}>PUF: {card.pufHash.substring(0, 16)}...</div>
                   )}
+                </div>
+                {/* Quick Actions */}
+                <div className="px-4 pb-4 flex gap-2">
+                  <Link href={`/verify?token=${card.pufHash || card.id}`} className="flex-1">
+                    <button className="w-full flex items-center justify-center gap-1 text-xs py-1.5 rounded-lg transition-colors" style={{ background: "oklch(0.72 0.18 145 / 0.08)", border: "1px solid oklch(0.72 0.18 145 / 0.2)", color: "oklch(0.72 0.18 145)" }}>
+                      <ShieldCheck className="w-3 h-3" /> Verify
+                    </button>
+                  </Link>
+                  {!card.isListed && !card.isInSlab && (
+                    <Link href="/marketplace" className="flex-1">
+                      <button className="w-full flex items-center justify-center gap-1 text-xs py-1.5 rounded-lg transition-colors" style={{ background: "oklch(0.82 0.18 85 / 0.08)", border: "1px solid oklch(0.82 0.18 85 / 0.2)", color: "oklch(0.82 0.18 85)" }}>
+                        <Tag className="w-3 h-3" /> List
+                      </button>
+                    </Link>
+                  )}
+                  <Link href="/burn" className="flex-1">
+                    <button className="w-full flex items-center justify-center gap-1 text-xs py-1.5 rounded-lg transition-colors" style={{ background: "oklch(0.60 0.22 25 / 0.08)", border: "1px solid oklch(0.60 0.22 25 / 0.2)", color: "oklch(0.60 0.22 25)" }}>
+                      <Flame className="w-3 h-3" /> Burn
+                    </button>
+                  </Link>
                 </div>
               </div>
             );
